@@ -1,5 +1,5 @@
-CREATE OR REPLACE TRIGGER AUDITORIA_USUARIO
-BEFORE INSERT OR UPDATE OR DELETE ON USUARIO
+CREATE OR REPLACE TRIGGER AUDITORIA_PESSOA
+BEFORE INSERT OR UPDATE OR DELETE ON PESSOA
 FOR EACH ROW
 DECLARE
     v_evento VARCHAR2(6);
@@ -10,35 +10,38 @@ BEGIN
     -- Determina o tipo de evento
     IF INSERTING THEN
         v_evento := 'INSERT';
-        v_registro_id := :NEW.USUARIO_ID;
+        v_registro_id := :NEW.PESSOA_ID;
     ELSIF UPDATING THEN
+     -- Verifica se houve realmente uma alteração nos campos monitorados
+        IF :OLD.NOME = :NEW.NOME AND
+           :OLD.EMAIL = :NEW.EMAIL AND
+           :OLD.ATIVO = :NEW.ATIVO THEN
+            -- Se todos os valores são iguais, não faz nada
+            RETURN;
+        END IF;
         v_evento := 'UPDATE';
-        v_registro_id := :NEW.USUARIO_ID;
+        v_registro_id := :NEW.PESSOA_ID;
     ELSIF DELETING THEN
         v_evento := 'DELETE';
-        v_registro_id := :OLD.USUARIO_ID;
+        v_registro_id := :OLD.PESSOA_ID;
     END IF;
 
     -- Captura os dados antigos e novos em formato JSON
     IF UPDATING OR DELETING THEN
         SELECT JSON_OBJECT(
-            'USUARIO_ID' VALUE :OLD.USUARIO_ID,
+            'PESSOA_ID' VALUE :OLD.PESSOA_ID,
             'NOME' VALUE :OLD.NOME,
-            'SOBRENOME' VALUE :OLD.SOBRENOME,
-            'IDADE' VALUE TO_CHAR(:OLD.IDADE, 'YYYY-MM-DD'),
-            'SEXO' VALUE :OLD.SEXO,
-            'EMAIL' VALUE :OLD.EMAIL
+            'EMAIL' VALUE :OLD.EMAIL,
+            'ATIVO' VALUE :OLD.ATIVO
         ) INTO v_dados_antigos FROM DUAL;
     END IF;
 
     IF INSERTING OR UPDATING THEN
         SELECT JSON_OBJECT(
-            'USUARIO_ID' VALUE :NEW.USUARIO_ID,
+            'PESSOA_ID' VALUE :NEW.PESSOA_ID,
             'NOME' VALUE :NEW.NOME,
-            'SOBRENOME' VALUE :NEW.SOBRENOME,
-            'IDADE' VALUE TO_CHAR(:NEW.IDADE, 'YYYY-MM-DD'),
-            'SEXO' VALUE :NEW.SEXO,
-            'EMAIL' VALUE :NEW.EMAIL
+             'EMAIL' VALUE :NEW.EMAIL,
+            'ATIVO' VALUE :NEW.ATIVO
         ) INTO v_dados_novos FROM DUAL;
     END IF;
 
@@ -49,14 +52,14 @@ BEGIN
         EVENTO,
         TABELA_NOME,
         REGISTRO_ID,
-        USUARIO,
+        PESSOA,
         DADOS_ANTIGOS,
         DADOS_NOVOS
     ) VALUES (
         SEQ_AUDITORIA.NEXTVAL,
         SYSTIMESTAMP,
         v_evento,
-        'USUARIO',
+        'PESSOA',
         v_registro_id,
         USER,
         v_dados_antigos,
@@ -64,3 +67,5 @@ BEGIN
     );
 END;
 /
+
+COMMIT;

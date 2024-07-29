@@ -1,10 +1,10 @@
-CREATE OR REPLACE PACKAGE validar_documentos IS
+CREATE OR REPLACE PACKAGE validar_documentos_principais IS
     FUNCTION validar_cpf(p_cpf IN VARCHAR2) RETURN BOOLEAN;
     FUNCTION validar_cnpj(p_cnpj IN VARCHAR2) RETURN BOOLEAN;
-END validar_documentos;
+END validar_documentos_principais;
 /
 
-CREATE OR REPLACE PACKAGE BODY validar_documentos IS
+CREATE OR REPLACE PACKAGE BODY validar_documentos_principais IS
 
     FUNCTION validar_cpf(p_cpf IN VARCHAR2) RETURN BOOLEAN IS
         m_total NUMBER := 0;
@@ -106,7 +106,7 @@ CREATE OR REPLACE PACKAGE BODY validar_documentos IS
         RETURN TRUE;
     END validar_cnpj;
 
-END validar_documentos;
+END validar_documentos_principais;
 /
 
 COMMIT;
